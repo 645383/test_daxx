@@ -1,5 +1,5 @@
 class Dictionary
-  attr_accessor :root_node
+  attr_accessor :root_node, :words
 
   NUMBERS_MAPPING = {
       2 => %w(a b c),
@@ -14,6 +14,7 @@ class Dictionary
 
   def initialize(root = nil)
     @root_node = Node.new(root)
+    @words = []
   end
 
   def load_file(file_name)
@@ -27,10 +28,14 @@ class Dictionary
 
   def insert_word(word)
     node = root_node
+
+    i = 0
     word.downcase.each_char do |char|
       number = select_number(char)
       value = {char => number}
-      node = insert(node, value)
+      fin = i == word.size - 1
+      node = insert(node, value, fin)
+      i += 1
     end
   end
 
@@ -38,48 +43,54 @@ class Dictionary
     NUMBERS_MAPPING.select { |_, v| v.include?(char) }.keys.first
   end
 
-  def insert(node, value)
+  def insert(node, value, fin)
     if node.children.empty?
-      new_node = Node.new(value)
+      new_node = Node.new(value, fin)
       node.children << new_node
       new_node
     elsif nested_node = node.get_node_by_value(value)
       nested_node
     else
-      new_node = Node.new(value)
+      new_node = Node.new(value, fin)
       node.children << new_node
       new_node
     end
   end
 
-  def build_word(number)
-    @words = []
+  def build(number)
     digits = number.to_s.chars.map(&:to_i)
-    search root_node, digits
-    @words
+    build_word(digits)
   end
 
-  def search(node, digits, word = '')
-    digits.each_with_index do |digit, i|
-      n_nodes = node.children.select { |c| c.value.key(digit) }
+  def build_word(digits)
+    search root_node, digits
+  end
 
-      n_nodes.each do |n_node|
-        value = n_node.value.key(digit)
-        if digits.count > 1
-          search n_node, digits[(i+1)..digits.count - 1], word + value
-        else
-          @words << word + value
-        end
+  def search(node, digits, subset = nil, word = '')
+
+    digit = digits.first
+    n_nodes = node.children.select { |c| c.value.key(digit) }
+
+    n_nodes.each do |n_node|
+      value = n_node.value.key(digit)
+      new_word = word + value
+
+      if digits.count > 1
+        search n_node, digits[1..(digits.count - 1)], nil, new_word
+      else
+        @words << word + value if new_word.size > 2
       end
     end
+    nil
   end
 end
 
 class Node
-  attr_accessor :value, :children
+  attr_accessor :value, :fin, :children
 
-  def initialize(value, children=[])
+  def initialize(value, fin = false, children=[])
     @value = value
+    @fin = fin
     @children = children
   end
 
@@ -87,7 +98,3 @@ class Node
     children.detect { |node| node.value == value }
   end
 end
-
-require './dictionary.rb'
-d = Dictionary.new
-d.load_file '/home/sergii/projects/test_daxx/dictionary.txt'
