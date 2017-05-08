@@ -53,21 +53,25 @@ class Dictionary
   end
 
   def build_word(number)
-    number.each do |n|
-
-      search(node, n)
-    end
+    @words = []
+    digits = number.to_s.chars.map(&:to_i)
+    search root_node, digits
+    @words
   end
 
-  def search(node, n)
-    n_children = node.children.select { |c| c.value.key(n) }
-    value = n_children.value.key(n)
+  def search(node, digits, word = '')
+    digits.each_with_index do |digit, i|
+      n_nodes = node.children.select { |c| c.value.key(digit) }
 
-    n_children.each do |n_node|
-      n_node.children.select { |c| c.value.key(n) }
+      n_nodes.each do |n_node|
+        value = n_node.value.key(digit)
+        if digits.count > 1
+          search n_node, digits[(i+1)..digits.count - 1], word + value
+        else
+          @words << word + value
+        end
+      end
     end
-
-
   end
 end
 
@@ -84,18 +88,6 @@ class Node
   end
 end
 
-class Number
-  attr_accessor :number
-
-  def initialize(number)
-    @number = number
-  end
-
-  def next
-
-  end
-end
-
-
 require './dictionary.rb'
 d = Dictionary.new
+d.load_file '/home/sergii/projects/test_daxx/dictionary.txt'
