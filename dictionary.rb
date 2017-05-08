@@ -1,6 +1,8 @@
 class Dictionary
   attr_accessor :root_node, :words
 
+  DIGIT_SIZE = 10
+  MIN_WORD_SIZE = 3
   NUMBERS_MAPPING = {
       2 => %w(a b c),
       3 => %w(d e f),
@@ -57,31 +59,61 @@ class Dictionary
     end
   end
 
-  def build(number)
+  def build_words(number)
     digits = number.to_s.chars.map(&:to_i)
-    build_word(digits)
-  end
-
-  def build_word(digits)
     search root_node, digits
   end
 
-  def search(node, digits, subset = nil, word = '')
-
+  def search(node, digits, subset = [], word = '')
     digit = digits.first
-    n_nodes = node.children.select { |c| c.value.key(digit) }
+    child_nodes = node.children.select { |c| c.value.key(digit) }
 
-    n_nodes.each do |n_node|
+    child_nodes.each do |n_node|
       value = n_node.value.key(digit)
       new_word = word + value
 
       if digits.count > 1
-        search n_node, digits[1..(digits.count - 1)], nil, new_word
+        sub_digits = digits[1..(digits.count - 1)]
+
+        if n_node.fin? && new_word.size >= MIN_WORD_SIZE && digits.size > MIN_WORD_SIZE
+          subset += [new_word]
+
+          # start search new word from the root
+          search(root_node, sub_digits, subset)
+
+          # continue search same word combinations
+          search(n_node, sub_digits, subset, new_word)
+        elsif subset.count != 0
+          search(n_node, sub_digits, subset, new_word)
+        end
+
+        search n_node, sub_digits, [], new_word
       else
-        @words << word + value if new_word.size > 2
+        if subset.count != 0
+          subset += [new_word] if n_node.fin?
+          squash_subset(subset)
+
+          if subset.count == 1
+            @words << subset.first if subset.first.size == DIGIT_SIZE
+          else
+            @words << subset if subset.join.size == DIGIT_SIZE
+          end
+        else
+          @words << word + value if new_word.size == DIGIT_SIZE
+        end
       end
     end
+
     nil
+  end
+
+  def squash_subset(subset)
+    if subset.count > 1
+      if subset.last[subset[subset.count - 2]]
+        subset.delete(subset[subset.count - 2])
+        squash_subset(subset)
+      end
+    end
   end
 end
 
@@ -96,5 +128,9 @@ class Node
 
   def get_node_by_value(value)
     children.detect { |node| node.value == value }
+  end
+
+  def fin?
+    fin
   end
 end
