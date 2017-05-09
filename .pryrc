@@ -1,4 +1,4 @@
-$LOAD_PATH << '.'
-require './dictionary.rb'
-d = Dictionary.new
-d.load_file '/home/sergii/projects/test_daxx/dictionary.txt'
+$LOAD_PATH << './lib'
+require 'words'
+dictionary = Dictionary.new
+dictionary.load_file 'dictionary.txt'
