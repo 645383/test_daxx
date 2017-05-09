@@ -40,21 +40,25 @@ class Dictionary
     end
   end
 
+  private
+
   def select_number(char)
-    NUMBERS_MAPPING.select { |_, v| v.include?(char) }.keys.first
+    NUMBERS_MAPPING.detect { |_, v| v.include?(char) }.first
   end
 
   def insert(node, value, fin)
     if node.children.empty?
-      new_node = Node.new(value, fin)
-      node.children << new_node
-      new_node
-    elsif nested_node = node.get_node_by_value(value)
-      nested_node
+      add_child_node(node, value, fin)
+    elsif child_node = node.get_node_by_value(value)
+      child_node
     else
-      new_node = Node.new(value, fin)
-      node.children << new_node
-      new_node
+      add_child_node(node, value, fin)
     end
+  end
+
+  def add_child_node(parent, value, fin)
+    child = Node.new(value, fin)
+    parent.children << child
+    child
   end
 end

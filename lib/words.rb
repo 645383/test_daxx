@@ -15,40 +15,42 @@ class Words
   def build
     digits = number.to_s.chars.map(&:to_i)
     search(dictionary.root_node, digits)
-    words.uniq!
+    words.uniq
   end
+
+  private
 
   def search(node, digits, subset = {}, word = '', key = '')
     digit = digits.first
     child_nodes = node.children.select { |c| c.value.key(digit) }
     subset = subset.clone
 
-    child_nodes.each do |n_node|
-      value = n_node.value.key(digit)
+    child_nodes.each do |child_node|
+      value = child_node.value.key(digit)
       new_word = word + value
       new_key = key + digit.to_s
 
       if digits.count > 1
         sub_digits = digits[1..(digits.count - 1)]
 
-        if n_node.fin? && new_word.size >= MIN_WORD_SIZE && digits.size > MIN_WORD_SIZE
+        if child_node.fin? && new_word.size >= MIN_WORD_SIZE && digits.size > MIN_WORD_SIZE
           add_to_subset subset, new_word, new_key
           # start search new word from the root
           search(dictionary.root_node, sub_digits, subset)
 
           # continue search same word combinations
-          search(n_node, sub_digits, subset, new_word, new_key)
+          search(child_node, sub_digits, subset, new_word, new_key)
         elsif subset.count != 0
-          search(n_node, sub_digits, subset, new_word, new_key)
+          search(child_node, sub_digits, subset, new_word, new_key)
         end
 
-        search n_node, sub_digits, {}, new_word, new_key
+        search child_node, sub_digits, {}, new_word, new_key
       else
-        if subset.count != 0 && n_node.fin?
+        if subset.count != 0 && child_node.fin?
           add_to_subset subset, new_word, new_key
           add_to_words(subset)
         else
-          @words << word + value if new_word.size == DIGIT_SIZE
+          @words << new_word if new_word.size == DIGIT_SIZE
         end
       end
     end
